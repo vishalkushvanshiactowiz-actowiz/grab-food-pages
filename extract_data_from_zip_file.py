@@ -17,10 +17,10 @@ def read_data_from_unzip_file(folder_path):
     return all_pages_data_list
 
 def extract_grab_food_data(all_pages_data_list):
-    print("extract code lenght : ", len(all_pages_data_list))
     ## extract from list of data of grab food pages.
     restaurant_list =[]
     for dict_data in all_pages_data_list:
+        Rest_Data = {}
         grab_food_dict = {}
         if not dict_data.get("merchant") :
             continue
@@ -42,15 +42,14 @@ def extract_grab_food_data(all_pages_data_list):
         grab_food_dict["distance"] = str (dict_data.get("merchant").get("distanceInKm") ) + " " + "Km"
         grab_food_dict["cuisine"] = dict_data.get("merchant").get("cuisine")
 
-        grab_food_dict["menu_detail"] = {}
-        menu_list = dict_data.get("merchant").get("menu").get("categories")
-        # grab_food_dict["menu_detail"][item_name] = []
+        menu_list = dict_data.get("merchant").get("menu").get("categories", [])
+        products_list = []
         if not menu_list:
-            restaurant_list.append(grab_food_dict)
+            Rest_Data["restaurant_detail"] = grab_food_dict
+            restaurant_list.append(Rest_Data)
             continue
         for data in menu_list:
             item_name = data["name"]
-            grab_food_dict["menu_detail"][item_name] = []
             for food_dict in data.get("items", []):
                 if food_dict.get("priceInMinorUnit"):
                     price_amount = (food_dict.get("priceInMinorUnit")) / 100
@@ -58,16 +57,18 @@ def extract_grab_food_data(all_pages_data_list):
                 else:
                     price_amount = 0
                 item_dict = {
+                    "restaurant_id" : dict_data.get("merchant").get("ID"),
+                    "category_name": item_name,
                     "food_id" : food_dict.get("ID"),
                     "food_name" : food_dict.get("name"),
                     "price" : price_amount,
                     "image_url" : food_dict.get("imgHref"),
                     "description" : food_dict.get("description")
                 }
+                products_list.append(item_dict)
 
-                grab_food_dict["menu_detail"][item_name].append(item_dict)
-        restaurant_list.append(grab_food_dict)
+        Rest_Data["restaurant_detail"] = grab_food_dict
+        Rest_Data["Menu_Items"] = products_list
+        restaurant_list.append(Rest_Data)
     return restaurant_list
-
-
 
